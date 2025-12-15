@@ -13,6 +13,33 @@ export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed. Use POST." });
   }
+// ✅ Quick fixed replies for greetings / small-talk (NO OpenAI call)
+const t = text.toLowerCase().trim();
+
+// Greeting keywords
+const isGreeting =
+  /^(hi|hello|hey|assalamualaikum|as-salamu alaykum|salam|আসসালামু আলাইকুম|সালাম|হাই|হ্যালো)\b/.test(t) ||
+  t === "hi" || t === "hello" || t === "hey" || t === "হাই" || t === "হ্যালো";
+
+// "How are you" keywords
+const isHowAreYou =
+  /(kemon aso|kemon acho|kemon aco|kmn aso|kmn acho|how are you|what's up|কি খবর|কেমন আছো|কেমন আছেন|কেমন আছিস)/.test(t);
+
+// Reply for greeting
+if (isGreeting) {
+  return res.status(200).json({
+    reply:
+      "হ্যালো। আমি Quick AI। পড়াশোনা, লেখা, হিসাব বা যেকোনো প্রশ্নে সাহায্য করতে পারি।",
+  });
+}
+
+// Reply for "কেমন আছো"
+if (isHowAreYou) {
+  return res.status(200).json({
+    reply:
+      "আমি ভালো আছি। তোমার কী অবস্থা? তুমি কী নিয়ে কথা বলতে চাও—বললে আমি সাহায্য করবো।",
+  });
+}
 
   try {
     const { message, history = [] } = req.body || {};
