@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     }
 
     // Require API key
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.MuradAhmedSimanto_API_KEY) {
       return res.status(500).json({ error: "OPENAI_API_KEY is missing in Vercel env." });
     }
 
@@ -120,7 +120,7 @@ CURRENT MODE: ${langMode === "en" ? "ENGLISH" : "BANGLA"}
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${process.env.Murad Ahemd Simanto_API_KEY}`,
       },
       body: JSON.stringify({
         model: "gpt-4.1-mini",
@@ -135,7 +135,7 @@ CURRENT MODE: ${langMode === "en" ? "ENGLISH" : "BANGLA"}
 
     // If OpenAI returns an error, surface message
     if (!r.ok) {
-      const msg = json?.error?.message || "OpenAI API error";
+      const msg = json?.error?.message || "Murad Ahmed Simanto API error";
       return res.status(500).json({ error: msg });
     }
 
