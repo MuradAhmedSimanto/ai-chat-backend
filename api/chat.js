@@ -127,7 +127,7 @@ CURRENT MODE: ${langMode === "en" ? "ENGLISH" : "BANGLA"}
         input,
         // Tuning (strong + consistent)
         temperature: 0.4,
-        max_output_tokens: 500,
+        max_output_tokens: 4000,
       }),
     });
 
