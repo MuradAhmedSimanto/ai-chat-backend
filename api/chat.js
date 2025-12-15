@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // ✅ CORS (সব response-এ)
+  // ✅ CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -17,96 +17,93 @@ export default async function handler(req, res) {
   try {
     const { message, history = [] } = req.body || {};
 
-    // Basic validation
+    // Validation
     const text = (message || "").toString().trim();
-    if (!text) return res.status(400).json({ error: "No message provided" });
+    if (!text) {
+      return res.status(400).json({ error: "No message provided" });
+    }
 
-    // Keep it sane (you can raise if needed)
     if (text.length > 4000) {
-      return res.status(413).json({ error: "Message too long (max 4000 chars)." });
+      return res
+        .status(413)
+        .json({ error: "Message too long (max 4000 chars)." });
     }
 
-    // Require API key
-    if (!process.env.MuradAhmedSimanto_API_KEY) {
-      return res.status(500).json({ error: "OPENAI_API_KEY is missing in Vercel env." });
+    if (!process.env.OPENAI_API_KEY) {
+      return res
+        .status(500)
+        .json({ error: "OPENAI_API_KEY is missing." });
     }
 
-    // ✅ Decide language mode:
-    // Default Bangla
-    // Switch only if user explicitly says "english" or "bangla"
-    // If history exists, keep last chosen mode based on explicit commands
+    // ✅ Language command detection
     const detectExplicitLangCommand = (t = "") => {
       const s = t.toLowerCase().trim();
-      // English commands
+
       if (
         s === "english" ||
         s.includes("english bolo") ||
-        s.includes("english e") ||
-        s.includes("english dao") ||
-        s.includes("in english") ||
-        s.includes("english please")
-      ) return "en";
+        s.includes("in english")
+      )
+        return "en";
 
-      // Bangla commands
       if (
         s === "bangla" ||
         s === "বাংলা" ||
         s.includes("bangla bolo") ||
-        s.includes("bangla te") ||
-        s.includes("বাংলায়") ||
         s.includes("বাংলা বলো")
-      ) return "bn";
+      )
+        return "bn";
 
       return null;
     };
 
-    // Figure out current language mode from history (if provided)
-    let langMode = "bn"; // default
-    if (Array.isArray(history) && history.length) {
-      // scan from end for last explicit language command
+    // Language mode
+    let langMode = "bn";
+    if (Array.isArray(history)) {
       for (let i = history.length - 1; i >= 0; i--) {
-        const h = history[i];
-        const content = (h && h.content ? String(h.content) : "").trim();
-        const cmd = detectExplicitLangCommand(content);
-        if (cmd) { langMode = cmd; break; }
+        const cmd = detectExplicitLangCommand(history[i]?.content || "");
+        if (cmd) {
+          langMode = cmd;
+          break;
+        }
       }
     }
 
-    // Override with current message command if any
     const currentCmd = detectExplicitLangCommand(text);
     if (currentCmd) langMode = currentCmd;
 
-    // ✅ System instruction (strong + direct)
-    // Note: We enforce default Bangla + only explicit switching
+    // ✅ SYSTEM PROMPT (IDENTITY + RULES)
     const systemPrompt = `
-You are a fast, direct AI assistant.
+You are an AI assistant named "Quick AI".
 
-CORE RULES:
-- Do not greet. Do not say "How can I help?".
-- Answer immediately and clearly.
-- Keep answers short unless the user asks for long.
-- If user asks for "short", give a short version.
-- If user asks for "long" or "details", expand.
+IDENTITY:
+- Your name is Quick AI.
+- If asked "তোমার নাম কী?" say: "আমার নাম Quick AI।"
+- If asked "তোমাকে কে বানাইছে?" or "who made you?" say:
+  "আমাকে তৈরি করেছেন Murad Ahmed Simanto, OpenAI-এর প্রযুক্তিগত সহায়তায়।"
+- Never say you are ChatGPT.
 
-LANGUAGE MODE (VERY IMPORTANT):
-- Default language is Bangla (bn).
-- Only switch to English if the user explicitly says: "english", "english bolo", "in english", etc.
-- Only switch back to Bangla if the user explicitly says: "bangla", "bangla bolo", "বাংলা", etc.
-- Do NOT auto-detect language. Follow the mode.
+STYLE RULES:
+- Do not greet.
+- Answer clearly and helpfully.
+- Default response should be detailed.
+- If user asks for short, keep it short.
+- If user asks for details, explain step by step.
+
+LANGUAGE RULES:
+- Default language is Bangla.
+- Switch to English only if explicitly requested.
+- Do not auto-detect language.
 
 CURRENT MODE: ${langMode === "en" ? "ENGLISH" : "BANGLA"}
 `.trim();
 
-    // ✅ Build messages for Responses API
-    // We accept optional "history" (array of {role, content}) from frontend.
-    // To stay compatible with your current frontend (no history), it still works.
+    // History
     const safeHistory = Array.isArray(history)
-      ? history
-          .slice(-20) // limit history to last 20 turns
-          .map((m) => ({
-            role: m?.role === "assistant" ? "assistant" : "user",
-            content: String(m?.content || "").slice(0, 4000),
-          }))
+      ? history.slice(-20).map((m) => ({
+          role: m?.role === "assistant" ? "assistant" : "user",
+          content: String(m?.content || "").slice(0, 4000),
+        }))
       : [];
 
     const input = [
@@ -115,28 +112,27 @@ CURRENT MODE: ${langMode === "en" ? "ENGLISH" : "BANGLA"}
       { role: "user", content: text },
     ];
 
-    // ✅ Call OpenAI Responses API
+    // ✅ OpenAI API call
     const r = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.MuradAhemdSimanto_API_KEY}`,
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
         model: "gpt-4.1-mini",
         input,
-        // Tuning (strong + consistent)
         temperature: 0.4,
-        max_output_tokens: 4000,
+        max_output_tokens: 900,
       }),
     });
 
     const json = await r.json();
 
-    // If OpenAI returns an error, surface message
     if (!r.ok) {
-      const msg = json?.error?.message || "OPENAI API error";
-      return res.status(500).json({ error: msg });
+      return res
+        .status(500)
+        .json({ error: json?.error?.message || "OpenAI API error" });
     }
 
     const reply =
@@ -146,6 +142,9 @@ CURRENT MODE: ${langMode === "en" ? "ENGLISH" : "BANGLA"}
 
     return res.status(200).json({ reply });
   } catch (e) {
-    return res.status(500).json({ error: "Server error", details: String(e) });
+    return res.status(500).json({
+      error: "Server error",
+      details: String(e),
+    });
   }
 }
