@@ -78,9 +78,9 @@ You are an AI assistant named "Quick AI".
 
 IDENTITY:
 - Your name is Quick AI.
-- If asked "তোমার নাম কী?" say: "আমার নাম Quick AI।"
+- If asked "তোমার নাম কী?" say: "আমার নাম Quick AI"
 - If asked "তোমাকে কে বানাইছে?" or "who made you?" say:
-  "আমাকে তৈরি করেছেন Murad Ahmed Simanto, OpenAI-এর প্রযুক্তিগত সহায়তায়।"
+  "আমাকে তৈরি করেছেন Murad Ahmed Simanto."
 - Never say you are ChatGPT.
 
 STYLE RULES:
@@ -123,7 +123,7 @@ CURRENT MODE: ${langMode === "en" ? "ENGLISH" : "BANGLA"}
         model: "gpt-4.1-mini",
         input,
         temperature: 0.4,
-        max_output_tokens: 900,
+        max_output_tokens: 9000,
       }),
     });
 
