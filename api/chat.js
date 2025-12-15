@@ -123,7 +123,7 @@ CURRENT MODE: ${langMode === "en" ? "ENGLISH" : "BANGLA"}
         model: "gpt-4.1-mini",
         input,
         temperature: 0.4,
-        max_output_tokens: 9000,
+        max_output_tokens: 900,
       }),
     });
 
