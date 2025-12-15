@@ -120,7 +120,7 @@ CURRENT MODE: ${langMode === "en" ? "ENGLISH" : "BANGLA"}
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.Murad Ahemd Simanto_API_KEY}`,
+        Authorization: `Bearer ${process.env.MuradAhemdSimanto_API_KEY}`,
       },
       body: JSON.stringify({
         model: "gpt-4.1-mini",
@@ -135,7 +135,7 @@ CURRENT MODE: ${langMode === "en" ? "ENGLISH" : "BANGLA"}
 
     // If OpenAI returns an error, surface message
     if (!r.ok) {
-      const msg = json?.error?.message || "Murad Ahmed Simanto API error";
+      const msg = json?.error?.message || "OPENAI API error";
       return res.status(500).json({ error: msg });
     }
 
