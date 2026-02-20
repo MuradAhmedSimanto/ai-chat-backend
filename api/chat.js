@@ -118,8 +118,8 @@ export default async function handler(req, res) {
     }
 
     // Require API key
-  if (!process.env.GROQ_API_KEY) {
-  return res.status(500).json({ error: "GROQ_API_KEY is missing in Vercel env." });
+if (!process.env.OPENAI_API_KEY) {
+  return res.status(500).json({ error: "OPENAI_API_KEY is missing in Vercel env." });
 }
     // ✅ Decide language mode:
     const detectExplicitLangCommand = (tt = "") => {
@@ -213,30 +213,30 @@ CURRENT MODE: ${langMode === "en" ? "ENGLISH" : "BANGLA"}
     ];
 
     // ✅ Call groq Responses API
-   const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+   const r = await fetch("https://api.openai.com/v1/responses", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
   },
   body: JSON.stringify({
-    model: "llama3-8b-8192",
-    messages: input, // তোমার input already {role, content} format এ আছে
+    model: "gpt-4.1-mini",
+    input,
     temperature: 0.4,
-    max_tokens: 900,
+    max_output_tokens: 900,
   }),
 });
-
     const json = await r.json();
-    
-// ✅ Call Groq Chat Completions API
+
+// ✅ Call openai Chat Completions API
     if (!r.ok) {
-     const msg = json?.error?.message || "Groq API error";
+    const msg = json?.error?.message || "OpenAI API error";
       return res.status(500).json({ error: msg });
     }
 
     const reply =
-  json?.choices?.[0]?.message?.content ||
+  json.output?.[0]?.content?.[0]?.text ||
+  json.output_text ||
   "কোনো উত্তর পাওয়া যায়নি। আবার চেষ্টা করো।";
 
     return res.status(200).json({ reply });
