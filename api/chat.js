@@ -213,8 +213,7 @@ CURRENT MODE: ${langMode === "en" ? "ENGLISH" : "BANGLA"}
     ];
 
     // ✅ Call groq Responses API
-   // ✅ Call OpenAI Chat Completions API
-const r = await fetch("https://api.openai.com/v1/chat/completions", {
+   const r = await fetch("https://api.openai.com/v1/responses", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -222,24 +221,25 @@ const r = await fetch("https://api.openai.com/v1/chat/completions", {
   },
   body: JSON.stringify({
     model: "gpt-4.1-mini",
-    messages: input,   // তোমার আগে বানানো input array এখানেই যাবে
+    input,
     temperature: 0.4,
-    max_tokens: 900,
+    max_output_tokens: 900,
   }),
 });
+    const json = await r.json();
 
-const json = await r.json();
+// ✅ Call openai Chat Completions API
+    if (!r.ok) {
+    const msg = json?.error?.message || "OpenAI API error";
+      return res.status(500).json({ error: msg });
+    }
 
-if (!r.ok) {
-  const msg = json?.error?.message || "OpenAI API error";
-  return res.status(500).json({ error: msg });
-}
-
-const reply =
-  json?.choices?.[0]?.message?.content ||
+    const reply =
+  json.output?.[0]?.content?.[0]?.text ||
+  json.output_text ||
   "কোনো উত্তর পাওয়া যায়নি। আবার চেষ্টা করো।";
 
-return res.status(200).json({ reply });
+    return res.status(200).json({ reply });
   } catch (e) {
     return res
       .status(500)
